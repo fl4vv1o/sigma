@@ -4690,6 +4690,7 @@ end
     self:SetTheme(library.theme);
     self:SetOpen(true);
     self.hasInit = true
+    library.watermark:Update()
 
 end
 
