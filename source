@@ -1,0 +1,123 @@
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local Section1 = Tab1:AddSection("Custom Esp", 1)
+
+local highlightInstances = {}
+local excludeSelf = true -- default: don't show on yourself
+
+
+local function clearAllHighlights()
+	for _, hl in pairs(highlightInstances) do
+		if hl and hl.Parent then
+			hl:Destroy()
+		end
+	end
+	table.clear(highlightInstances)
+end
+
+
+local function applyHighlight(player, color)
+	if player.Character and player ~= LocalPlayer or not excludeSelf then
+		if player.Character:FindFirstChild("HumanoidRootPart") then
+			if not highlightInstances[player] then
+				local highlight = Instance.new("Highlight")
+				highlight.FillColor = color or Color3.fromRGB(255, 255, 255)
+				highlight.OutlineColor = Color3.new(0, 0, 0)
+				highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+				highlight.Parent = player.Character
+				highlightInstances[player] = highlight
+			end
+		end
+	end
+end
+
+
+Section1:AddToggle({
+	text = "Chams",
+	state = false,
+	risky = false,
+	tooltip = "Highlights all players (custom color)",
+	flag = "Toggle_1",
+	callback = function(enabled)
+		clearAllHighlights()
+
+		if enabled then
+			for _, player in ipairs(Players:GetPlayers()) do
+				applyHighlight(player, Flags["Color_1"])
+			end
+		end
+	end
+})
+
+
+Section1:AddColor({
+	enabled = true,
+	text = "Custom Chams Color",
+	tooltip = "Set your custom ESP color",
+	color = Color3.fromRGB(255, 255, 255),
+	flag = "Color_1",
+	trans = 0,
+	open = false,
+	risky = false,
+	callback = function(color)
+		for _, hl in pairs(highlightInstances) do
+			if hl then
+				hl.FillColor = color
+			end
+		end
+	end
+})
+
+
+Section1:AddToggle({
+	text = "Team Chams",
+	state = false,
+	risky = false,
+	tooltip = "Green = same team, Red = enemy team",
+	flag = "Toggle_2",
+	callback = function(enabled)
+		clearAllHighlights()
+
+		if enabled then
+			for _, player in ipairs(Players:GetPlayers()) do
+				if player ~= LocalPlayer or not excludeSelf then
+					local color = (player.Team == LocalPlayer.Team) and Color3.new(0, 1, 0) or Color3.new(1, 0, 0)
+					applyHighlight(player, color)
+				end
+			end
+		end
+	end
+})
+
+
+Section1:AddToggle({
+	text = "Highlight Self",
+	state = false,
+	flag = "ESP_Self",
+	callback = function(v)
+		excludeSelf = not v
+
+		
+		if Flags["Toggle_1"] then
+			Flags["Toggle_1"] = false
+			Flags["Toggle_1"] = true
+		elseif Flags["Toggle_2"] then
+			Flags["Toggle_2"] = false
+			Flags["Toggle_2"] = true
+		end
+	end
+})
+
+
+Players.PlayerAdded:Connect(function(player)
+	player.CharacterAdded:Connect(function()
+		task.wait(1)
+		if Flags["Toggle_1"] then
+			applyHighlight(player, Flags["Color_1"])
+		elseif Flags["Toggle_2"] then
+			local color = (player.Team == LocalPlayer.Team) and Color3.new(0, 1, 0) or Color3.new(1, 0, 0)
+			applyHighlight(player, color)
+		end
+	end)
+end)
